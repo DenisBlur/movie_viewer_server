@@ -1,0 +1,20 @@
+{
+  "name": "movie_server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@playwright/test": "^1.40.0",
+    "http": "^0.0.1-security",
+    "socket.io": "^4.7.2",
+    "beautiful-dom": "^1.0.9"
+  },
+  "devDependencies": {},
+  "description": ""
+}
