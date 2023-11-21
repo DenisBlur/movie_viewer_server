@@ -3,6 +3,8 @@ const io = require('socket.io')(server)
 let currentMovie = "";
 let connectedUsers = [];
 let createdSessions = [];
+
+
 io.on('connection', function (client) {
 
     console.log('client connect...', client.id);
@@ -357,8 +359,6 @@ async function get4KMovie(data, client) {
                             headers: data.headers()
                         });
                         if (response.ok) {
-                            console.log(response.url)
-                            console.log("GOOD");
                             await browser.close();
                             client.emit("socket_data", "get_link_complete")
 
@@ -427,6 +427,77 @@ async function get4KMovie(data, client) {
         }
 
     }
+
+}
+
+//Писк на базовом сайте с фильмами
+async function searchBaseMovie(data, client) {
+
+    ///Инициализируем браузер
+    const browser = await playwright.chromium.launch({
+        headless: false,
+        channel: 'msedge',
+    })
+
+    ///Создаем новую вкладку в браузере
+    const page = await browser.newPage()
+    await page.setViewportSize({width: 1280, height: 800})
+    //Переход на страницу
+    await page.goto("https://kinoka.ru/");
+
+
+    //Находим все инпуты на сайте
+    let input = await page.locator('input[id="story"]').all();
+    if (input.length !== 0) {
+        //Устанавливаем в них значение
+        await input[0].fill(data);
+        await input[1].fill(data);
+        //Отправляем
+        await page.keyboard.press("Enter")
+        ///Ждем загрузку
+        await page.on("load", async load => {
+            //Отправка данных на клиент
+
+            //Заканчиваем работу с браузером
+            await browser.close();
+        })
+    }
+}
+
+//Получение ссылки на фильм из базовой библиотеки фильмов
+async function getBaseMovie(data, client) {
+
+    ///Инициализируем браузер
+    const browser = await playwright.chromium.launch({
+        headless: false,
+        channel: 'msedge',
+    })
+
+    ///Создаем новую вкладку в браузере
+    const page = await browser.newPage()
+    await page.setViewportSize({width: 1280, height: 800})
+
+    ///Смотрим запросы на сайте (ОБЯЗАТЕЛЬНО ДО GOTO)
+    await page.on("request", async request => {
+        ///Если находим главный файл (содержит качество фильмов)
+        if (request.url().includes(".m3u8")) {
+            ///отправляем запрос на по ссылки и получаем все "качества" фильма
+            const response = await fetch(request.url());
+            if (response.ok) {
+                //Отправка данных на клиент
+
+                console.log(await response.text())
+                console.log(request.url())
+
+                //Заканчиваем работу с браузером
+                await browser.close();
+
+            }
+        }
+    })
+
+    //Переход на страницу
+    await page.goto(data);
 
 }
 
