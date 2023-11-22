@@ -57,6 +57,10 @@ io.on('connection', function (client) {
 
     });
 
+    client.on('user_get_movie_link', async function name(data) {
+        await getBaseMovieStreamLink(data, client)
+    })
+
     client.on('session_connect', function name(data) {
 
         let dataPack = JSON.parse(data);
@@ -73,6 +77,22 @@ io.on('connection', function (client) {
                         value,
                     ];
                     io.emit('session_user_connect', JSON.stringify(dataSend))
+                    if(localSession.currentMovie !== null) {
+                        console.log("СТАВИМ ФИЛЬМ!");
+                        console.log(localSession);
+                        client.emit('session_set_movie', JSON.stringify(
+
+                        ))
+                        const dataSend = [
+                            "play",
+                            localSession.sessionId,
+                        ];
+                        client.emit('session_action', dataSend)
+
+                        client.emit()
+                    } else  {
+                        console.log("НОУ ФИЛЬМА");
+                    }
                     return true
                 }
             })
@@ -160,7 +180,7 @@ io.on('connection', function (client) {
                         let oldOwner = "";
 
 
-                        if (createdSessions[i].connectedUsers.length !== 0) {
+                        if (createdSessions[i] !== null && createdSessions[i].connectedUsers.length !== 0) {
                             if (localSession.ownerSessionID === localUser.id) {
                                 oldOwner = localUser.id;
                                 createdSessions[i].ownerSessionID = createdSessions[i].connectedUsers[0].id
@@ -184,15 +204,14 @@ io.on('connection', function (client) {
 
     client.on('session_set_movie', function name(data) {
         let localSession = JSON.parse(data);
-
-        console.log(localSession.streamLink);
-
         createdSessions.forEach((item, i) => {
             if (item.sessionId === localSession.sessionId) {
                 createdSessions[i].currentMovie = localSession.currentMovie;
                 createdSessions[i].streamLink = localSession.streamLink;
                 createdSessions[i].audioLink = localSession.audioLink;
+                console.log(createdSessions[i]);
                 io.emit('session_set_movie', JSON.stringify(createdSessions[i]))
+                io.emit("session_update", JSON.stringify(createdSessions))
             }
         });
     })
@@ -303,6 +322,7 @@ server.listen(server_port, "192.168.3.19", function (err) {
 
 const playwright = require('playwright');
 const BeautifulDom = require('beautiful-dom');
+const url = require("url");
 
 let blockList = [
     "code.moviead55.ru",
@@ -465,11 +485,11 @@ async function searchBaseMovie(data, client) {
 }
 
 //Получение ссылки на фильм из базовой библиотеки фильмов
-async function getBaseMovie(data, client) {
+async function getBaseMovieStreamLink(data, client)  {
 
     ///Инициализируем браузер
+    ///Если надо тестировать использовать в options headless: false,
     const browser = await playwright.chromium.launch({
-        headless: false,
         channel: 'msedge',
     })
 
@@ -484,20 +504,33 @@ async function getBaseMovie(data, client) {
             ///отправляем запрос на по ссылки и получаем все "качества" фильма
             const response = await fetch(request.url());
             if (response.ok) {
-                //Отправка данных на клиент
 
-                console.log(await response.text())
-                console.log(request.url())
+                //Получаем ответ сервера
+                let responseBody = await response.text()
+                //url для работы с фильмами
+                let url = request.url();
+
+                let dataPack = {
+                    url,
+                    responseBody
+                }
+
+                //Отправка данных на конкретному клиенту
+                client.emit("user_get_movie_link", dataPack)
 
                 //Заканчиваем работу с браузером
+                await page.close();
                 await browser.close();
+                return dataPack;
 
             }
         }
     })
 
     //Переход на страницу
-    await page.goto(data);
+    await page.goto(data, {
+        waitUntil: "domcontentloaded"
+    });
 
 }
 
