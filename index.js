@@ -318,9 +318,20 @@ function uuidv4() {
     );
 }
 
+const { networkInterfaces } = require('os');
+const nets = networkInterfaces();
+const results = [];
+for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+        const familyV4Value = typeof net.family === 'string' ? 'IPv4' : 4
+        if (net.family === familyV4Value && !net.internal) {
+            results.push(net.address);
+        }
+    }
+}
 
 var server_port = process.env.PORT || 3000;
-server.listen(server_port, "192.168.3.128", function (err) {
+server.listen(server_port, results[1], function (err) {
     if (err) throw err
     console.log('Listening on port %d', server_port);
 });
