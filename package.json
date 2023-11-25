@@ -11,10 +11,9 @@
   "license": "ISC",
   "dependencies": {
     "@playwright/test": "^1.40.0",
+    "beautiful-dom": "^1.0.9",
     "http": "^0.0.1-security",
-    "socket.io": "^4.7.2",
-    "beautiful-dom": "^1.0.9"
+    "socket.io": "^4.7.2"
   },
-  "devDependencies": {},
   "description": ""
 }

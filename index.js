@@ -58,7 +58,11 @@ io.on('connection', function (client) {
     });
 
     client.on('user_get_movie_link', async function name(data) {
-        await getBaseMovieStreamLink(data, client)
+        await getMovieStreamLinks(data, client)
+    })
+
+    client.on('user_search_movie', async function name(data) {
+        await searchBaseMovie(data, client)
     })
 
     client.on('session_connect', function name(data) {
@@ -112,6 +116,7 @@ io.on('connection', function (client) {
                 localSessionID,
             ];
             io.emit('session_sync_time', dataSend)
+
         }
     })
 
@@ -315,7 +320,7 @@ function uuidv4() {
 
 
 var server_port = process.env.PORT || 3000;
-server.listen(server_port, "192.168.3.19", function (err) {
+server.listen(server_port, "192.168.3.128", function (err) {
     if (err) throw err
     console.log('Listening on port %d', server_port);
 });
@@ -455,7 +460,7 @@ async function searchBaseMovie(data, client) {
 
     ///Инициализируем браузер
     const browser = await playwright.chromium.launch({
-        headless: false,
+        headless: true,
         channel: 'msedge',
     })
 
@@ -477,7 +482,7 @@ async function searchBaseMovie(data, client) {
         ///Ждем загрузку
         await page.on("load", async load => {
             //Отправка данных на клиент
-
+            client.emit("user_search_movie", await page.content())
             //Заканчиваем работу с браузером
             await browser.close();
         })
@@ -485,7 +490,7 @@ async function searchBaseMovie(data, client) {
 }
 
 //Получение ссылки на фильм из базовой библиотеки фильмов
-async function getBaseMovieStreamLink(data, client)  {
+async function getMovieStreamLinks(data, client)  {
 
     ///Инициализируем браузер
     ///Если надо тестировать использовать в options headless: false,
@@ -529,7 +534,7 @@ async function getBaseMovieStreamLink(data, client)  {
 
     //Переход на страницу
     await page.goto(data, {
-        waitUntil: "domcontentloaded"
+        waitUntil: "commit"
     });
 
 }
