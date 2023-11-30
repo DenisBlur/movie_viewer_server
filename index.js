@@ -24,9 +24,9 @@ io.on('connection', function (client) {
 
         createdSessions.forEach((session, i) => {
 
-            if(session.sessionId === sessionId) {
+            if (session.sessionId === sessionId) {
                 session.connectedUsers.forEach((user, j) => {
-                    if(localUser.id === user.id) {
+                    if (localUser.id === user.id) {
 
                         createdSessions[i].connectedUsers[j] = localUser;
 
@@ -108,22 +108,6 @@ io.on('connection', function (client) {
                         value,
                     ];
                     io.emit('session_user_connect', JSON.stringify(dataSend))
-                    if(localSession.currentMovie !== null) {
-                        console.log("СТАВИМ ФИЛЬМ!");
-                        console.log(localSession);
-                        client.emit('session_set_movie', JSON.stringify(
-
-                        ))
-                        const dataSend = [
-                            "play",
-                            localSession.sessionId,
-                        ];
-                        client.emit('session_action', dataSend)
-
-                        client.emit()
-                    } else  {
-                        console.log("НОУ ФИЛЬМА");
-                    }
                     return true
                 }
             })
@@ -155,10 +139,12 @@ io.on('connection', function (client) {
         let localSessionID = dataPack.sessionId;
 
         if (localSessionID !== "null") {
-            const dataSend = [
+
+            let dataSend = [
                 localAction,
-                localSessionID,
+                localSessionID
             ];
+
             io.emit('session_action', dataSend)
         }
     })
@@ -414,7 +400,7 @@ async function get4KMovie(data, client) {
                             client.emit("socket_data", "get_link_complete")
 
                             createdSessions.forEach((value, index) => {
-                                if(value.sessionId === localSessionId) {
+                                if (value.sessionId === localSessionId) {
                                     createdSessions[index].streamLink = response.url;
                                     createdSessions[index].headers = JSON.stringify(data.headers());
                                     createdSessions[index].currentMovie = movie;
@@ -516,7 +502,7 @@ async function searchBaseMovie(data, client) {
 }
 
 //Получение ссылки на фильм из базовой библиотеки фильмов
-async function getMovieStreamLinks(data, client)  {
+async function getMovieStreamLinks(data, client) {
 
     ///Инициализируем браузер
     ///Если надо тестировать использовать в options headless: false,
