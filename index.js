@@ -16,11 +16,38 @@ io.on('connection', function (client) {
 
     })
 
+    client.on('user_player_time', function name(data) {
+        let dataPack = JSON.parse(data);
+
+        let localUser = JSON.parse(dataPack["user"]);
+        let sessionId = dataPack["sessionId"];
+
+        createdSessions.forEach((session, i) => {
+
+            if(session.sessionId === sessionId) {
+                session.connectedUsers.forEach((user, j) => {
+                    if(localUser.id === user.id) {
+
+                        createdSessions[i].connectedUsers[j] = localUser;
+
+                        io.emit("session_user_time_update", JSON.stringify(createdSessions[i]));
+
+                        return true;
+
+                    }
+                })
+            }
+
+        })
+
+    })
+
     client.on('user_create', function name(data) {
 
         let user = {
             "id": client.id,
             "username": data,
+            "currentTime": 0,
         }
         connectedUsers.push(user)
         client.emit('user_create', JSON.stringify(user))
